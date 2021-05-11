@@ -36,7 +36,7 @@ io.on("connection", (socket) => {
 });
 
 app.get("/load", (req,res) => {
-	res.send("Help")
+	res.status(200).send('Hello, friend!')
 	if(loadBalancing){
 		clients[activeNode]["socket"].emit("message", "Request goes here")
 		console.log(activeNode, "is the active node at this moment");
