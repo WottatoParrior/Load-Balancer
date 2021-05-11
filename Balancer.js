@@ -8,13 +8,14 @@ const helpers =  require("./helpers")
 // We always assume that server number 0 is our starting point
 // he has no requests and is brand new
 
-let freshStart = true // Flah is true at the start of every run, and is set false when we receive first request
-let requests = 0
+let freshStart = true // Flag is true at the start of every run, and is set false when we receive first request
+let pool = {items:[], length : 0}
 let activeNode = 0
 let leastConnections = 100
 let nodeWithLeastConnections = 0
 let leastResTime = 6000
 let nodeWithLeastResTime = 0
+const loadBalancing = true
 const clients = []
 
 
@@ -36,39 +37,27 @@ io.on("connection", (socket) => {
 
 app.get("/load", (req,res) => {
 	res.send("Help")
-	clients[activeNode]["socket"].emit("message", "Request goes here")
-	activeNode = RoundRobin(activeNode)
-	console.log(activeNode, "is the active node at this moment");
-	
-	// activeNode = LeastConnections()
+	if(loadBalancing){
+		clients[activeNode]["socket"].emit("message", "Request goes here")
+		console.log(activeNode, "is the active node at this moment");
+		// activeNode = LeastConnections()
 	// activeNode = WeightedResponseTime()
+	activeNode = RoundRobin(activeNode)
+	}else{
+		if(freshStart){
+			freshStart = false;
+			console.time("time")
+		}
+		pool.items.push({createdAt: Date.now(), value: "Request goes here"})
+		pool["length"] = pool.items.length
+	}
+	
+	
+	
 		
 })
-setInterval(() => {
-	if(requests > 0){
-		requests --;
-		console.log(requests);
-	}else if( requests === 0 && !freshStart){
-		console.timeEnd("time")
-		freshStart = true;
-	}
-	}, 400)
-app.get("/loadbasic", (req,res) => {
-	if(freshStart){
-		freshStart = false;
-		console.time("time")
-	}
-	res.send("Help")
-	requests ++;
-	
-	//TODO Same as Servers func
-	// activeNode = RoundRobin(activeNode)
-	// activeNode = LeastConnections()
-	// activeNode = WeightedResponseTime()
-	
-	
-	
-})
+
+
 function updateSocketInfo(socket, data){
 	clients.map( (client,index) => {
 		if(client.socket.id === socket.id){ //filter impleme TODO
@@ -107,6 +96,23 @@ function WeightedResponseTime(){
 	return nodeWithLeastResTime
 }
 
+// This is enabled only on loadBalancer  === false
+
+
+// setInterval(() => {
+// 	if(pool.length > 0){
+// 		helpers.removeFirstElement(pool)
+
+// 	}else if(pool.length == 0 && !freshStart){
+// 		console.timeEnd("time")
+// 		freshStart = true;
+// 	}
+// 	},helpers.getRandomInRange(400,700)
+// )
+// setInterval(() => {
+// 	console.log(pool);
+	
+// },300)
 httpServer.listen(3000);
 
 
