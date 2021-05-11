@@ -1,6 +1,6 @@
 const app = require('express')();
-const httpServer = require("http").Server(app);
-const io = require("socket.io")(httpServer);
+const server = app.listen(4000);
+const io = require('socket.io')(server);
 const helpers =  require("./helpers")
 
 
@@ -15,8 +15,9 @@ let leastConnections = 100
 let nodeWithLeastConnections = 0
 let leastResTime = 6000
 let nodeWithLeastResTime = 0
-const loadBalancing = false
+const loadBalancing = true
 const clients = []
+console.log('Load Balancing is turned', loadBalancing);
 
 
 io.on("connection", (socket) => {
@@ -37,7 +38,6 @@ io.on("connection", (socket) => {
 
 app.get("/", (req,res) => {
     res.status(200).send('Hello, friend!');
-    res.send("Hello");
 	if(loadBalancing){
 		clients[activeNode]["socket"].emit("message", "Request goes here")
 		console.log(activeNode, "is the active node at this moment");
@@ -114,8 +114,7 @@ function WeightedResponseTime(){
 // 	console.log(pool);
 	
 // },300)
-httpServer.listen(4000);
-app.listen(8080)
+
 
 
 
