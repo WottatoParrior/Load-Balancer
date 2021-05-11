@@ -15,7 +15,7 @@ let leastConnections = 100
 let nodeWithLeastConnections = 0
 let leastResTime = 6000
 let nodeWithLeastResTime = 0
-const loadBalancing = true
+const loadBalancing = false
 const clients = []
 
 
@@ -35,8 +35,9 @@ io.on("connection", (socket) => {
 	
 });
 
-app.get("/load", (req,res) => {
-	res.status(200).send('Hello, friend!')
+app.get("/", (req,res) => {
+    res.status(200).send('Hello, friend!');
+    res.send("Hello");
 	if(loadBalancing){
 		clients[activeNode]["socket"].emit("message", "Request goes here")
 		console.log(activeNode, "is the active node at this moment");
@@ -114,7 +115,7 @@ function WeightedResponseTime(){
 	
 // },300)
 httpServer.listen(4000);
-
+app.listen(8080)
 
 
 
