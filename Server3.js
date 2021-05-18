@@ -24,30 +24,44 @@ socket.on("disconnect", () => {
 
 socket.on("message",(data) => {
 
-	if(freshStart){
-		freshStart = false;
-		console.time("time")
-	}
+	
 	pool.items.push({createdAt: Date.now(), value: data})
 	pool["length"] = pool.items.length
+	if(freshStart){
+		console.time("time")
+		let randInterval = helpers.getRandomInRange(400,600)
+		removeElementFromPool(randInterval)
+		freshStart = false;
+	}
 
 })
 socket.on("make_passive_check", () => {
 	socket.emit("response_of_check" , pool.length)
 })
 
-setInterval(() => {
-	if(pool.length > 0){
-		helpers.removeFirstElement(pool)
+// setInterval(() => {
+// 	if(pool.length > 0){
+// 		helpers.removeFirstElement(pool)
 
-	}else if(pool.length == 0 && !freshStart){
-		console.timeEnd("time")
-		freshStart = true;
+// 	}else if(pool.length == 0 && !freshStart){
+// 		console.timeEnd("time")
+// 		freshStart = true;
 
-	}
-	},helpers.getRandomInRange(400,700)
-)
-setInterval(() => {
-	console.log(pool);
+// 	}
+// 	},helpers.getRandomInRange(400,700)
+// )
+// setInterval(() => {
+// 	console.log(pool);
 	
-},300)
+// },300)
+function removeElementFromPool(randInterval) {
+	setTimeout(() => {
+		if(pool.length > 0){
+			helpers.removeFirstElement(pool)
+			let newRandInterval = helpers.getRandomInRange(400,600)
+			removeElementFromPool(newRandInterval)
+		}else{
+			console.timeEnd("time")
+		}
+	}, randInterval)
+}

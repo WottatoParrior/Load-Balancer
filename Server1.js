@@ -17,7 +17,7 @@ const io = require("socket.io-client");
 // port, displaying the messages for 
 // connecting and disconnecting
 
-const socket=io("http://127.0.0.1:4000/")
+const socket=io("https://project-balancer-1.appspot.com/")
 
 
 // We represent the pool of requests
@@ -49,13 +49,16 @@ socket.on("disconnect", () => {
 
 socket.on("message",(data) => {
 	
-	if(freshStart){
-		freshStart = false;
-		console.time("time")
-	}
+	
 	// Everytime we receive a request we push it to our pool array along with additional details
 	pool.items.push({createdAt: Date.now(), value: data})
 	pool["length"] = pool.items.length
+	if(freshStart){
+		console.time("time")
+		let randInterval = helpers.getRandomInRange(400,600)
+		removeElementFromPool(randInterval)
+		freshStart = false;
+	}
 
 	
 	
@@ -66,17 +69,27 @@ socket.on("make_passive_check", () => {
 
 // It's a timed interval function to remove the first element of our pool , simulating
 // the copletion of a request
-setInterval(() => {
-	if(pool.length > 0){
-		helpers.removeFirstElement(pool)
+// setInterval(() => {
+// 	if(pool.length > 0){
+// 		helpers.removeFirstElement(pool)
 
-	}else if(pool.length == 0 && !freshStart){
-		console.timeEnd("time")
-		freshStart = true;
-	}
-	},helpers.getRandomInRange(400,700)
-)
-setInterval(() => {
-	console.log(pool);
+// 	}else if(pool.length == 0 && !freshStart){
+// 		console.timeEnd("time")
+// 		freshStart = true;
+// 	}
+// 	},helpers.getRandomInRange(400,700));
+// setInterval(() => {
+// 	console.log(pool);
 	
-},300)
+// },300)
+function removeElementFromPool(randInterval) {
+	setTimeout(() => {
+		if(pool.length > 0){
+			helpers.removeFirstElement(pool)
+			let newRandInterval = helpers.getRandomInRange(400,600)
+			removeElementFromPool(newRandInterval)
+		}else{
+			console.timeEnd("time")
+		}
+	}, randInterval)
+}

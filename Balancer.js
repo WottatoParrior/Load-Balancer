@@ -15,7 +15,7 @@ let leastConnections = 100
 let nodeWithLeastConnections = 0
 let leastResTime = 6000
 let nodeWithLeastResTime = 0
-const loadBalancing = true
+const loadBalancing = false //Change this to enable load balancing, or no load balancing
 const clients = []
 console.log('Load Balancing is turned', loadBalancing);
 
@@ -37,20 +37,22 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req,res) => {
-    res.status(200).send('Hello, friend!');
 	if(loadBalancing){
 		clients[activeNode]["socket"].emit("message", "Request goes here")
 		console.log(activeNode, "is the active node at this moment");
 		// activeNode = LeastConnections()
-	// activeNode = WeightedResponseTime()
-	activeNode = RoundRobin(activeNode)
+		// activeNode = WeightedResponseTime()
+		activeNode = RoundRobin(activeNode)
 	}else{
-		if(freshStart){
-			freshStart = false;
-			console.time("time")
-		}
 		pool.items.push({createdAt: Date.now(), value: "Request goes here"})
 		pool["length"] = pool.items.length
+		if(freshStart){
+			console.time("time")
+			let randInterval = helpers.getRandomInRange(400,600)
+			removeElementFromPool(randInterval)
+			freshStart = false;
+		}
+	
 	}
 	
 	
@@ -100,21 +102,28 @@ function WeightedResponseTime(){
 // This is enabled only on loadBalancer  === false
 
 
-// setInterval(() => {
-// 	if(pool.length > 0){
-// 		helpers.removeFirstElement(pool)
 
-// 	}else if(pool.length == 0 && !freshStart){
-// 		console.timeEnd("time")
-// 		freshStart = true;
-// 	}
-// 	},helpers.getRandomInRange(400,700)
-// )
-// setInterval(() => {
-// 	console.log(pool);
+setInterval(() => {
+	console.log(pool);
 	
-// },300)
+},300)
 
-
-
-
+// We create the debounce function to measure the active time we receive quests,
+// when we receive the first request the timer starts and then when we have not 
+// received requests for 1000ms, the timer stops and displays how long we have been receiving requests
+// const debounce = helpers.debounce(function(){
+// 	if(pool.length === 0 && !freshStart){
+// 	  console.timeEnd("time")
+// 	}
+//   }, 500);
+function removeElementFromPool(randInterval) {
+	setTimeout(() => {
+		if(pool.length > 0){
+			helpers.removeFirstElement(pool)
+			let newRandInterval = helpers.getRandomInRange(400,600)
+			removeElementFromPool(newRandInterval)
+		}else{
+			console.timeEnd("time")
+		}
+	}, randInterval)
+}
