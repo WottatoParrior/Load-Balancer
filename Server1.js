@@ -16,8 +16,8 @@ const io = require("socket.io-client");
 // Initialize the socket on the appropriate
 // port, displaying the messages for 
 // connecting and disconnecting
+const socket=io("http://127.0.0.1:4000/")
 
-const socket=io("https://project-balancer-1.appspot.com/")
 
 
 // We represent the pool of requests
@@ -48,7 +48,6 @@ socket.on("disconnect", () => {
 // pool of requests
 
 socket.on("message",(data) => {
-	
 	
 	// Everytime we receive a request we push it to our pool array along with additional details
 	pool.items.push({createdAt: Date.now(), value: data})
@@ -82,7 +81,15 @@ socket.on("make_passive_check", () => {
 // 	console.log(pool);
 	
 // },300)
+
+
+// setInterval(() => {
+// 	console.log(pool);
+	
+// },300)
 function removeElementFromPool(randInterval) {
+	console.log("Enters removal");
+	
 	setTimeout(() => {
 		if(pool.length > 0){
 			helpers.removeFirstElement(pool)
@@ -90,6 +97,8 @@ function removeElementFromPool(randInterval) {
 			removeElementFromPool(newRandInterval)
 		}else{
 			console.timeEnd("time")
+			freshStart = true
+
 		}
 	}, randInterval)
 }

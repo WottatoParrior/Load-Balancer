@@ -54,6 +54,10 @@ socket.on("make_passive_check", () => {
 // 	console.log(pool);
 	
 // },300)
+// setInterval(() => {
+// 	console.log(pool);
+	
+// },300)
 function removeElementFromPool(randInterval) {
 	setTimeout(() => {
 		if(pool.length > 0){
@@ -62,6 +66,8 @@ function removeElementFromPool(randInterval) {
 			removeElementFromPool(newRandInterval)
 		}else{
 			console.timeEnd("time")
+			freshStart = true
+
 		}
 	}, randInterval)
 }

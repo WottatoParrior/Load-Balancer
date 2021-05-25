@@ -11,11 +11,11 @@ const helpers =  require("./helpers")
 let freshStart = true // Flag is true at the start of every run, and is set false when we receive first request
 let pool = {items:[], length : 0}
 let activeNode = 0
+let pheromoneNode = 0;
+let nodeWithLeastConnections = 0;
 let leastConnections = 100
-let nodeWithLeastConnections = 0
 let leastResTime = 6000
-let nodeWithLeastResTime = 0
-const loadBalancing = false //Change this to enable load balancing, or no load balancing
+const loadBalancing = true //Change this to enable load balancing, or no load balancing
 const clients = []
 console.log('Load Balancing is turned', loadBalancing);
 
@@ -37,12 +37,16 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req,res) => {
+	res.send("hi");
 	if(loadBalancing){
 		clients[activeNode]["socket"].emit("message", "Request goes here")
-		console.log(activeNode, "is the active node at this moment");
-		// activeNode = LeastConnections()
+		// activeNode = LeastConnections(nodeWithLeastConnections)
+		// activeNode = RandomAlgo();
 		// activeNode = WeightedResponseTime()
-		activeNode = RoundRobin(activeNode)
+		activeNode = AntColony()
+		// activeNode = RoundRobin(activeNode)
+		// console.log(activeNode, "is the active node at this moment");
+		
 	}else{
 		pool.items.push({createdAt: Date.now(), value: "Request goes here"})
 		pool["length"] = pool.items.length
@@ -81,19 +85,48 @@ function RoundRobin(activeNode){
 	}
 	return activeNode
 }
-function LeastConnections(){
+function LeastConnections(nodeWithLeastConnections){
 
-	// clients.map( (client, index) => {
-	// 	if(client.connectionNum < least ){
-	// 		least = client.connectionNum
-	// 		nodeWithLeast = index
-	// 	}
-	// })
-
+	clients.map( (client, index) => {
+		if(client.connectionNum < clients[nodeWithLeastConnections].connectionNum ){
+			nodeWithLeastConnections = index
+		}
+	})
+	
 	return nodeWithLeastConnections
 }
+function RandomAlgo(){
+	let activeNode = 0;
+	clients.map( (client, index) => {
+		if(client.connectionNum === 0){
+			activeNode = index
+		}
+	})
+	
+	return activeNode;
+}
 function AntColony(){
+	let activeNode = null;
+	let i =pheromoneNode;
+	while( i < clients.length){
+		console.log(i, pheromoneNode, activeNode);
+		
+		if(clients[i].connectionNum < 15){
+			activeNode = i;
+			pheromoneNode = i;
+			break;
+		}
+		if(i === clients.length - 1){
+			i = 0
+			console.log("ENTER");
 
+		}else{
+			i++;
+		}
+	}
+	
+	
+	return activeNode;
 }
 function WeightedResponseTime(){
 	return nodeWithLeastResTime
@@ -103,19 +136,12 @@ function WeightedResponseTime(){
 
 
 
-setInterval(() => {
-	console.log(pool);
+// setInterval(() => {
+// 	console.log(pool);
 	
-},300)
+// },300)
 
-// We create the debounce function to measure the active time we receive quests,
-// when we receive the first request the timer starts and then when we have not 
-// received requests for 1000ms, the timer stops and displays how long we have been receiving requests
-// const debounce = helpers.debounce(function(){
-// 	if(pool.length === 0 && !freshStart){
-// 	  console.timeEnd("time")
-// 	}
-//   }, 500);
+
 function removeElementFromPool(randInterval) {
 	setTimeout(() => {
 		if(pool.length > 0){
@@ -124,6 +150,7 @@ function removeElementFromPool(randInterval) {
 			removeElementFromPool(newRandInterval)
 		}else{
 			console.timeEnd("time")
+			freshStart = true
 		}
 	}, randInterval)
 }
