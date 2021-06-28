@@ -88,7 +88,6 @@ socket.on("make_passive_check", () => {
 	
 // },300)
 function removeElementFromPool(randInterval) {
-	console.log("Enters removal");
 	
 	setTimeout(() => {
 		if(pool.length > 0){

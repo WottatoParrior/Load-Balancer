@@ -43,8 +43,8 @@ app.get("/", (req,res) => {
 		// activeNode = LeastConnections(nodeWithLeastConnections)
 		// activeNode = RandomAlgo();
 		// activeNode = WeightedResponseTime()
-		activeNode = AntColony()
-		// activeNode = RoundRobin(activeNode)
+		// activeNode = AntColony(20)
+		activeNode = RoundRobin(activeNode)
 		// console.log(activeNode, "is the active node at this moment");
 		
 	}else{
@@ -95,30 +95,19 @@ function LeastConnections(nodeWithLeastConnections){
 	
 	return nodeWithLeastConnections
 }
-function RandomAlgo(){
-	let activeNode = 0;
-	clients.map( (client, index) => {
-		if(client.connectionNum === 0){
-			activeNode = index
-		}
-	})
-	
-	return activeNode;
-}
-function AntColony(){
+
+function AntColony(ON){
 	let activeNode = null;
 	let i =pheromoneNode;
 	while( i < clients.length){
-		console.log(i, pheromoneNode, activeNode);
 		
-		if(clients[i].connectionNum < 15){
+		if(clients[i].connectionNum < ON){
 			activeNode = i;
 			pheromoneNode = i;
 			break;
 		}
 		if(i === clients.length - 1){
 			i = 0
-			console.log("ENTER");
 
 		}else{
 			i++;
@@ -128,9 +117,7 @@ function AntColony(){
 	
 	return activeNode;
 }
-function WeightedResponseTime(){
-	return nodeWithLeastResTime
-}
+
 
 // This is enabled only on loadBalancer  === false
 
