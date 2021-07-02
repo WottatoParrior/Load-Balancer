@@ -16,7 +16,7 @@ const io = require("socket.io-client");
 // Initialize the socket on the appropriate
 // port, displaying the messages for 
 // connecting and disconnecting
-const socket=io("http://127.0.0.1:4000/")
+const socket=io("http://127.0.0.1:4000/");
 
 
 
@@ -29,13 +29,13 @@ const socket=io("http://127.0.0.1:4000/")
 const pool = {items : [], length : 0}
 let freshStart = true
 
-socket.on("connect", () => {
-	console.log('Connected server 1');
+socket.on("connect", (data) => {
+	console.log('Connected server 1',data);
 	
 	
 })
-socket.on("disconnect", () => {
-	console.log('Socket 1 disconnected');
+socket.on("disconnect", (data) => {
+	console.log('Socket 1 disconnected:', data);
 	
 	
 })
@@ -63,7 +63,9 @@ socket.on("message",(data) => {
 	
 })
 socket.on("make_passive_check", () => {
-	socket.emit("response_of_check" , pool.length)
+	console.log("gets checked",pool.items.length);
+
+	socket.emit("response_of_check" , pool.items.length)
 })
 
 // It's a timed interval function to remove the first element of our pool , simulating

@@ -1,9 +1,8 @@
 const app = require('express')();
 const server = app.listen(4000);
-const io = require('socket.io')(server);
+const io = require('socket.io')(server,{pingTimeout : 3000000});
 const helpers =  require("./helpers")
-
-
+const process = require('process');
 
 // We always assume that server number 0 is our starting point
 // he has no requests and is brand new
@@ -19,12 +18,10 @@ const loadBalancing = true //Change this to enable load balancing, or no load ba
 const clients = []
 console.log('Load Balancing is turned', loadBalancing);
 
-
 io.on("connection", (socket) => {
 	// We push in the client array, each new client connection along with some details we will need later
 	clients.push({socket, connectionNum : null, resTime : null});
 	console.log('Connected with client ' + socket.id)
-
 	socket.on('disconnect', function () {
 		console.log('disconnected');
 	 });
@@ -35,16 +32,16 @@ io.on("connection", (socket) => {
 	socket.on("response_of_check",(data) => updateSocketInfo(socket, data) )
 	
 });
-
 app.get("/", (req,res) => {
 	res.send("hi");
 	if(loadBalancing){
+		
 		clients[activeNode]["socket"].emit("message", "Request goes here")
 		// activeNode = LeastConnections(nodeWithLeastConnections)
 		// activeNode = RandomAlgo();
 		// activeNode = WeightedResponseTime()
-		// activeNode = AntColony(20)
-		activeNode = RoundRobin(activeNode)
+		activeNode = AntColony(15)
+		// activeNode = RoundRobin(activeNode)
 		// console.log(activeNode, "is the active node at this moment");
 		
 	}else{
@@ -59,12 +56,7 @@ app.get("/", (req,res) => {
 	
 	}
 	
-	
-	
-		
 })
-
-
 function updateSocketInfo(socket, data){
 	clients.map( (client,index) => {
 		if(client.socket.id === socket.id){ //filter impleme TODO
@@ -86,7 +78,6 @@ function RoundRobin(activeNode){
 	return activeNode
 }
 function LeastConnections(nodeWithLeastConnections){
-
 	clients.map( (client, index) => {
 		if(client.connectionNum < clients[nodeWithLeastConnections].connectionNum ){
 			nodeWithLeastConnections = index
@@ -95,20 +86,38 @@ function LeastConnections(nodeWithLeastConnections){
 	
 	return nodeWithLeastConnections
 }
-
 function AntColony(ON){
+	let clientsAtMax = []
+	let freeClientExists = true
 	let activeNode = null;
 	let i =pheromoneNode;
+	let k=0
 	while( i < clients.length){
 		
 		if(clients[i].connectionNum < ON){
 			activeNode = i;
-			pheromoneNode = i;
+			pheromoneNode = activeNode;
 			break;
+		}else{
+			for(client in clients){
+				console.log(clients[client].connectionNum, ON);
+				
+				if(clients[client].connectionNum > ON){
+					clientsAtMax.push(client)
+				}
+			}
+			 
+			if(clientsAtMax.length === clients.length){
+				activeNode = LeastConnections(nodeWithLeastConnections);
+				
+				pheromoneNode = activeNode;
+				i = clients.length
+			}else{
+				clientsAtMax = []
+			}
 		}
 		if(i === clients.length - 1){
 			i = 0
-
 		}else{
 			i++;
 		}
@@ -117,18 +126,6 @@ function AntColony(ON){
 	
 	return activeNode;
 }
-
-
-// This is enabled only on loadBalancer  === false
-
-
-
-// setInterval(() => {
-// 	console.log(pool);
-	
-// },300)
-
-
 function removeElementFromPool(randInterval) {
 	setTimeout(() => {
 		if(pool.length > 0){
@@ -140,4 +137,12 @@ function removeElementFromPool(randInterval) {
 			freshStart = true
 		}
 	}, randInterval)
+}
+function checkClientStatus(socket, time) {
+	
+
+	setTimeout(() => {
+		socket.emit("make_passive_check")
+		checkClientStatus(socket)
+	}, time)
 }
